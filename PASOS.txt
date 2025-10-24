@@ -1,0 +1,88 @@
+Resumen: De Local a Público con Vercel
+Este proceso consta de dos grandes etapas:
+
+Preparación (Git y GitHub): Poner tu código en un lugar que Vercel pueda ver.
+
+Despliegue (Vercel): Conectar Vercel a ese código para publicarlo en la web.
+
+Etapa 1: Preparación (Git y GitHub)
+Objetivo: Subir el código de tu proyecto local a un repositorio en la nube.
+
+Crear el Repositorio en GitHub:
+
+Ve a github.com y crea un "New repository".
+
+Dale un nombre (ej. mi-nuevo-proyecto).
+
+No marques las casillas de README o .gitignore (queremos un repo vacío).
+
+Preparar tu Proyecto Local:
+
+Abre tu proyecto en VSCode.
+
+Abre la terminal integrada (Ctrl + Ñ).
+
+Escribe git init (solo si no es ya un repositorio Git).
+
+Hacer el Primer "Commit" (Guardado):
+
+git add . (Prepara todos tus archivos para guardarlos).
+
+git commit -m "Commit inicial" (Toma la "foto" de tus archivos).
+
+Conectar y Subir a GitHub:
+
+git branch -M main (Nombra tu rama principal como "main").
+
+git remote add origin https://github.com/TU-USUARIO/tu-repo.git (Conecta tu local con el repo de GitHub. Copia esta URL de la página de GitHub).
+
+git push -u origin main (Sube tu código a GitHub).
+
+¡Tu código ya está respaldado en GitHub!
+
+Etapa 2: Despliegue (Vercel)
+Objetivo: Conectar Vercel a tu GitHub para que construya y publique tu app.
+
+Crear Cuenta en Vercel:
+
+Ve a vercel.com y regístrate.
+
+Elige la opción "Continue with GitHub".
+
+Autorizar Vercel en GitHub:
+
+Durante el registro, te pedirá "instalar" la app de Vercel en tu GitHub.
+
+Autorízalo para "Todos los repositorios" o "Solo repositorios seleccionados" (asegurándote de incluir el nuevo).
+
+Importar el Proyecto en Vercel:
+
+En tu panel de Vercel, busca e Importa el repositorio de GitHub que acabas de subir (ej. mi-nuevo-proyecto).
+
+Configurar y Desplegar:
+
+Vercel detectará automáticamente qué tipo de proyecto es (ej. "Next.js").
+
+Usualmente no necesitas cambiar ninguna configuración.
+
+Simplemente presiona el botón "Deploy".
+
+¡Éxito!
+
+Vercel tomará tu código, ejecutará el comando npm run build en sus servidores y lo publicará.
+
+Al terminar, te dará tu URL pública (ej. mi-nuevo-proyecto.vercel.app).
+
+Mantenimiento (Tu Flujo de Trabajo Futuro)
+A partir de ahora, cada vez que quieras actualizar tu sitio web:
+
+Programa en VSCode (haz tus cambios).
+
+Guarda y sube los cambios a GitHub:
+
+Bash
+
+git add .
+git commit -m "Mensaje de mi cambio"
+git push
+Espera 1-2 minutos. Vercel detectará el push y redesplegará tu sitio automáticamente. Los cambios aparecerán en tu misma URL.
