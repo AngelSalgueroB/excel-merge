@@ -6,7 +6,7 @@
     "dev": "next dev --hostname 0.0.0.0 --turbopack -p 9002",
     "genkit:dev": "genkit start -- tsx src/ai/dev.ts",
     "genkit:watch": "genkit start -- tsx --watch src/ai/dev.ts",
-    "build": "cross-env NODE_ENV=production next build && next export",    
+    "build": "cross-env NODE_ENV=production next build",    
     "start": "next start",
     "lint": "next lint",
     "typecheck": "tsc --noEmit"
