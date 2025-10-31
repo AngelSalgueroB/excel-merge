@@ -2,7 +2,7 @@
 
 import { useState, useEffect, type ChangeEvent } from 'react';
 import * as XLSX from 'xlsx';
-import { Upload, Download, FileText, Loader2, X, AlertTriangle, Sun, Moon } from 'lucide-react';
+import { Upload, Download, FileText, Loader2, X, AlertTriangle, Sun, Moon, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
@@ -19,7 +19,7 @@ export default function Home() {
   const [headers, setHeaders] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [fileName, setFileName] = useState('Order_Form_Output');
+  // const [fileName, setFileName] = useState('Order_Form_Output'); // <-- ELIMINADO
   const [theme, setTheme] = useState<'light' | 'dark'>('light');
 
   useEffect(() => {
@@ -37,23 +37,16 @@ export default function Home() {
       const newFiles = Array.from(event.target.files);
 
       setFiles(prevFiles => {
-        // Creamos un Set con claves únicas (nombre-tamaño-fecha) de los archivos existentes
         const existingFileKeys = new Set(
           prevFiles.map(f => `${f.name}-${f.size}-${f.lastModified}`)
         );
-
-        // Filtramos los nuevos archivos para añadir solo los que no existan ya
         const uniqueNewFiles = newFiles.filter(f => {
           const fileKey = `${f.name}-${f.size}-${f.lastModified}`;
           return !existingFileKeys.has(fileKey);
         });
-
-        // Retornamos la lista combinada
         return [...prevFiles, ...uniqueNewFiles];
       });
 
-      // Es correcto resetear esto, ya que la lista de archivos cambió
-      // y se debe generar un nuevo merge.
       setMergedData([]);
       setHeaders([]);
       setError(null);
@@ -64,6 +57,25 @@ export default function Home() {
     setFiles(files.filter(file => file !== fileToRemove));
   };
 
+  // --- NUEVA FUNCIÓN ---
+  // Lógica de descarga movida a su propia función
+  const downloadFile = (data: ExcelRow[], dataHeaders: string[]) => {
+    if (data.length === 0) {
+      setError("No data available to download.");
+      return;
+    }
+    try {
+      const worksheet = XLSX.utils.json_to_sheet(data, { header: dataHeaders });
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, 'MergedData');
+      // Nombre de archivo fijo como solicitaste
+      XLSX.writeFile(workbook, `Merge_files.xlsx`);
+    } catch (e) {
+      console.error(e);
+      setError("An error occurred while creating the download file.");
+    }
+  };
+  
   const processFiles = async () => {
     if (files.length === 0) {
       setError("Please upload at least one Excel file.");
@@ -83,6 +95,7 @@ export default function Home() {
       const firstSheetName = firstWorkbook.SheetNames[0];
       const firstWorksheet = firstWorkbook.Sheets[firstSheetName];
       const firstJsonData = XLSX.utils.sheet_to_json<ExcelRow>(firstWorksheet, { header: 1, defval: "" });
+      
       if (firstJsonData.length > 0) {
         firstFileHeaders = (firstJsonData[0] as string[]).map(String);
       } else {
@@ -112,6 +125,14 @@ export default function Home() {
 
       setMergedData(normalizedData);
 
+      // --- CAMBIO ---
+      // Llamar a la descarga automáticamente después de procesar
+      if (normalizedData.length > 0) {
+        downloadFile(normalizedData, firstFileHeaders);
+      } else {
+        setError("No data was found to merge.");
+      }
+
     } catch (e: any) {
       console.error(e);
       setError(e.message || "An error occurred while processing the files. Please ensure they are valid Excel files.");
@@ -122,24 +143,9 @@ export default function Home() {
     }
   };
 
-  const handleDownload = () => {
-    if (mergedData.length === 0) {
-      setError("No data available to download.");
-      return;
-    }
-    setIsLoading(true);
-    try {
-      const worksheet = XLSX.utils.json_to_sheet(mergedData, { header: headers });
-      const workbook = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(workbook, worksheet, 'MergedData');
-      XLSX.writeFile(workbook, `${fileName || 'Order_Form_Output'}.xlsx`);
-    } catch (e) {
-      console.error(e);
-      setError("An error occurred while creating the download file.");
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  // --- ELIMINADO ---
+  // La función handleDownload ya no es necesaria
+  // const handleDownload = () => { ... };
   
   const currentYear = new Date().getFullYear();
 
@@ -164,8 +170,22 @@ export default function Home() {
           <p className="text-muted-foreground mt-2">Merge your Excel files from TB database into a single file with ease.</p>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start max-w-7xl mx-auto">
-          <Card className="w-full shadow-lg">
+        {/* --- CAMBIO --- El bloque de error ahora está aquí arriba */}
+        <div className="max-w-7xl mx-auto mb-4 lg:max-w-2xl">
+          {error && (
+            <Alert variant="destructive">
+              <AlertTriangle className="h-4 w-4" />
+              <AlertTitle>Error</AlertTitle>
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
+          )}
+        </div>
+        
+        {/* --- CAMBIO --- La cuadrícula ahora es de 1 columna y centrada */}
+        <div className="grid grid-cols-1 lg:grid-cols-1 gap-8 items-start max-w-7xl mx-auto">
+          
+          {/* --- CAMBIO --- Añadidas clases para centrar la tarjeta en pantallas grandes */}
+          <Card className="w-full shadow-lg lg:max-w-2xl lg:mx-auto">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Upload className="h-6 w-6"/>
@@ -184,15 +204,20 @@ export default function Home() {
               {files.length > 0 && (
                 <div className="space-y-2">
                   <h3 className="font-semibold text-sm">Selected Files:</h3>
-                  <ul className="space-y-2 max-h-40 overflow-y-auto pr-2">
+                  
+                  {/* --- CAMBIO --- Altura máxima aumentada a max-h-64 */}
+                  <ul className="space-y-2 max-h-64 overflow-y-auto pr-2">
                     {files.map((file, index) => (
                       <li key={index} className="flex items-center justify-between bg-secondary/30 p-2 rounded-md text-sm">
                         <div className="flex items-center gap-2 truncate">
                           <FileText className="h-4 w-4 shrink-0" />
                           <span className="truncate">{file.name}</span>
                         </div>
-                        <Button variant="ghost" size="icon" className="h-6 w-6 shrink-0" onClick={() => removeFile(file)}>
-                          <X className="h-4 w-4" />
+                        
+                        {/* --- CAMBIO --- Botón de eliminar más grande y de color rojo */}
+                        <Button variant="destructive" size="icon" className="h-8 w-8 shrink-0" onClick={() => removeFile(file)}>
+                          <Trash2 className="h-5 w-5" />
+                          <span className="sr-only">Remove file</span>
                         </Button>
                       </li>
                     ))}
@@ -201,67 +226,22 @@ export default function Home() {
               )}
             </CardContent>
             <CardFooter>
+               {/* --- CAMBIO --- Texto del botón actualizado */}
                <Button onClick={processFiles} disabled={files.length === 0 || isLoading} className="w-full">
                 {isLoading ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                     Processing...
                   </>
-                ) : `Merge ${files.length} File${files.length !== 1 ? 's' : ''}`}
+                ) : `Merge & Download ${files.length} File${files.length !== 1 ? 's' : ''}`}
               </Button>
             </CardFooter>
           </Card>
 
-          <div className="space-y-8">
-             {error && (
-              <Alert variant="destructive">
-                  <AlertTriangle className="h-4 w-4" />
-                  <AlertTitle>Error</AlertTitle>
-                  <AlertDescription>{error}</AlertDescription>
-              </Alert>
-            )}
+          {/* --- ELIMINADO --- 
+              Toda la sección "2. Download" ha sido eliminada.
+          */}
 
-            <Card className="w-full shadow-lg">
-                <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                        <Download className="h-6 w-6"/>
-                        2. Download
-                    </CardTitle>
-                    <CardDescription>Download your combined Order Form as a single Excel file.</CardDescription>
-                </CardHeader>
-                <CardContent className="flex flex-col sm:flex-row gap-2 items-center">
-                    <Input
-                        type="text"
-                        value={fileName}
-                        onChange={(e) => setFileName(e.target.value)}
-                        placeholder="Enter filename"
-                        className="flex-grow"
-                        disabled={mergedData.length === 0}
-                    />
-                    <span className="text-muted-foreground self-center font-medium">.xlsx</span>
-                </CardContent>
-                <CardFooter>
-                    <Button onClick={handleDownload} disabled={mergedData.length === 0 || isLoading} className="w-full bg-accent text-accent-foreground hover:bg-accent/90">
-                        {isLoading && mergedData.length === 0 ? (
-                            <>
-                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                Processing...
-                            </>
-                        ) : isLoading ? (
-                            <>
-                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                Preparing...
-                            </>
-                        ) : (
-                            <>
-                                <Download className="mr-2 h-4 w-4" />
-                                Download Order Form
-                            </>
-                        )}
-                    </Button>
-                </CardFooter>
-            </Card>
-          </div>
         </div>
       </main>
 
